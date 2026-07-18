@@ -13,39 +13,41 @@
             overflow: hidden; touch-action: none;
             font-family: monospace;
         }
-        .lang-selector { margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .lang-btn {
+        .control-panel {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .lang-selector, .mode-selector { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .lang-btn, .mode-btn {
             background-color: #000a00; color: #33ff33; border: 2px solid #005500;
             padding: 8px 16px; cursor: pointer; font-family: monospace; font-weight: bold;
             box-shadow: 0 0 10px #002200; transition: all 0.2s ease;
         }
-        .lang-btn:hover, .lang-btn.active {
+        .lang-btn:hover, .lang-btn.active, .mode-btn:hover, .mode-btn.active {
             background-color: #003300; color: #ffffff; border-color: #33ff33; box-shadow: 0 0 15px #005500;
         }
+        .mode-btn { border-color: #004455; color: #00ffcc; box-shadow: 0 0 10px #001122; }
+        .mode-btn.active { border-color: #00ffff; background-color: #002233; color: #ffffff; box-shadow: 0 0 15px #0088cc; }
         .game-container {
             position: relative;
-            width: 600px;
-            height: 900px;
-            max-width: 100vw;
-            max-height: 80vh;
+            width: 600px; height: 900px;
+            max-width: 100vw; max-height: 80vh;
         }
         canvas {
             border: 2px solid #005500; box-shadow: 0 0 20px #003300;
             background-color: #000a00; width: 100%; height: 100%; object-fit: contain;
         }
-        /* Retro Boot Overlay Screens Style Settings */
         .boot-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #000a00;
-            border: 2px solid #005500;
+            background-color: #000a00; border: 2px solid #005500;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            z-index: 100;
-            color: #33ff33;
-            text-align: center;
-            box-sizing: border-box;
-            padding: 20px;
+            z-index: 100; color: #33ff33; text-align: center;
+            box-sizing: border-box; padding: 20px;
         }
         .boot-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; text-shadow: 0 0 10px #005500; }
         .boot-desc { font-size: 14px; margin-bottom: 40px; max-width: 80%; line-height: 1.6; color: #88ff88; }
@@ -59,48 +61,48 @@
 </head>
 <body>
 
-    <div class="lang-selector">
-        <button id="btn-es" class="lang-btn active" onclick="switchLanguage('es', this)">SPANISH (ES)</button>
-        <button id="btn-de" class="lang-btn" onclick="switchLanguage('de', this)">GERMAN (DE)</button>
-        <button id="btn-fr" class="lang-btn" onclick="switchLanguage('fr', this)">FRENCH (FR)</button>
-        <button id="btn-ru" class="lang-btn" onclick="switchLanguage('ru', this)">RUSSIAN (RU)</button>
+    <div class="control-panel">
+        <!-- Language Switchers Nodes -->
+        <div class="lang-selector">
+            <button id="btn-es" class="lang-btn active" onclick="switchLanguage('es', this)">SPANISH (ES)</button>
+            <button id="btn-de" class="lang-btn" onclick="switchLanguage('de', this)">GERMAN (DE)</button>
+            <button id="btn-fr" class="lang-btn" onclick="switchLanguage('fr', this)">FRENCH (FR)</button>
+            <button id="btn-ru" class="lang-btn" onclick="switchLanguage('ru', this)">RUSSIAN (RU)</button>
+        </div>
+        <!-- Difficulty State Switches -->
+        <div class="mode-selector">
+            <button id="mode-std" class="mode-btn active" onclick="switchDifficultyMode('standard', this)">STANDARD (CORRUPTION CURVE)</button>
+            <button id="mode-hard" class="mode-btn" onclick="switchDifficultyMode('hardcore', this)">HARDCORE (100% FOREIGN OVERRIDE)</button>
+        </div>
     </div>
 
     <div class="game-container">
-        <!-- Interactive Splascreen Block Element -->
         <div id="bootScreen" class="boot-overlay">
-            <div class="boot-title">ISLA TERMINAL V1.4</div>
-            <div class="boot-desc">WARNING: Secure multi-language transceiver pathways are corrupted. Interface sound synths require immediate terminal decryption initialization.</div>
+            <div class="boot-title">ISLA TERMINAL V1.5</div>
+            <div class="boot-desc">WARNING: Secure transceiver firmware layers are compromised. Local storage auto-save state modules initialized. Click below to confirm hardware handshake clearance.</div>
             <button class="boot-btn" onclick="initializeSystemHardware()">INITIALIZE SYSTEM HARDWARE</button>
         </div>
         <canvas id="terminal" width="600" height="900"></canvas>
     </div>
 
-    <!-- Inline Global Security Gateway (Fixed loader race-condition error) -->
     <script>
         window.initializeSystemHardware = function() {
-            // Hide the overlay screen smoothly
             const overlay = document.getElementById('bootScreen');
             if (overlay) overlay.style.display = 'none';
 
-            // Wake up the Web Audio API audio context cleanly
             try {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (AudioCtx) {
                     const context = new AudioCtx();
                     if (context.state === 'suspended') context.resume();
                 }
-            } catch (e) {
-                console.warn("Audio Context activation failed:", e);
-            }
+            } catch (e) { console.warn("Audio Context activation failed:", e); }
 
-            // Fire up the core game loop inside game.js safely
             if (typeof setupMobileKeypad === "function") setupMobileKeypad();
-            if (typeof loadLanguagePack === "function") loadLanguagePack(currentLanguage);
-            if (typeof playFX === "function") playFX("correct");
+            if (typeof initSaveStateProfile === "function") initSaveStateProfile(); // Pulls memory allocations from local storage profiles
         }
     </script>
 
-    <script src="game.js?v=splash_fix_build_final"></script>
+    <script src="game.js?v=localstorage_hardcore_build"></script>
 </body>
 </html>

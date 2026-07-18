@@ -1,17 +1,62 @@
 const canvas = document.getElementById('terminal');
 const ctx = canvas.getContext('2d');
 
-// --- THE ASYNCHRONOUS LOCALIZATION ENGINE ---
+// --- THE LOCALIZATION AND STATE PROFILE ENGINES ---
 let currentLanguage = "es";
+let difficultyMode = "standard"; // Options pathways vectors: "standard" or "hardcore"
 let currentDict = null; 
-
-// Master Audio Context Tracker pinned globally
-let systemAudioContext = null;
 
 const englishBase = {
     numbers: { 0: "ZERO", 1: "ONE", 2: "TWO", 3: "THREE", 4: "FOUR", 5: "FIVE", 6: "SIX", 7: "SEVEN", 8: "EIGHT", 9: "NINE" },
     operators: { "+": "ADD", "-": "SUB", "*": "MULT", "/": "DIV" }
 };
+
+// --- LOCALSTORAGE DATA HANDSHAKE STORAGE ALLOCATIONS ---
+function initSaveStateProfile() {
+    console.log("[SAVE PROFILE] Reading LocalStorage parameters...");
+    
+    // Pull archived language choice records
+    const savedLang = localStorage.getItem("isla_terminal_lang");
+    if (savedLang) {
+        currentLanguage = savedLang;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        const activeLangBtn = document.getElementById(`btn-${savedLang}`);
+        if (activeLangBtn) activeLangBtn.classList.add('active');
+    }
+
+    // Pull archived difficulty status records
+    const savedMode = localStorage.getItem("isla_terminal_mode");
+    if (savedMode) {
+        difficultyMode = savedMode;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        const targetBtnId = savedMode === "standard" ? "mode-std" : "mode-hard";
+        const activeModeBtn = document.getElementById(targetBtnId);
+        if (activeModeBtn) activeModeBtn.classList.add('active');
+    }
+
+    // Pull archived progress tracking markers
+    const savedScore = localStorage.getItem(`isla_terminal_progress_${currentLanguage}`);
+    if (savedScore) {
+        problemCount = parseInt(savedScore);
+        console.log(`[SAVE PROFILE] Progress restored for ${currentLanguage.toUpperCase()}: Sector ${problemCount}`);
+    } else {
+        problemCount = 1;
+    }
+
+    loadLanguagePack(currentLanguage);
+}
+
+function autoSaveProgress() {
+    if (!gameActive) {
+        localStorage.removeItem(`isla_terminal_progress_${currentLanguage}`); // Flush score table if fully beaten
+        return;
+    }
+    // Set persistent tracking blocks inside local system storage fields strings values
+    localStorage.setItem(`isla_terminal_progress_${currentLanguage}`, problemCount);
+    localStorage.setItem("isla_terminal_lang", currentLanguage);
+    localStorage.setItem("isla_terminal_mode", difficultyMode);
+    console.log(`[AUTOSAVE SUCCESS] Saved profile configuration: Language=${currentLanguage}, Mode=${difficultyMode}, Sector=${problemCount}`);
+}
 
 async function loadLanguagePack(langKey) {
     try {
@@ -28,13 +73,14 @@ async function loadLanguagePack(langKey) {
     }
 }
 
-// Runtime Game State Trackers
+// Runtime Game State Parameters 
 let problemCount = 1;
 const TOTAL_PROBLEMS = 50;
 let playerInput = "";
-let systemMessage = "DECODER ONLINE. NETWORK CHANNELS STABLE.";
+let systemMessage = "DECODER ONLINE. INTERCEPT NODE READY.";
 let terminalColor = "#33ff33";
 let gameActive = true;
+let systemAudioContext = null;
 
 let currentNum1 = 0;
 let currentNum2 = 0;
@@ -73,6 +119,7 @@ function setupMobileKeypad() {
     }
 }
 
+// Interactive Live Language Switches
 window.switchLanguage = function(langKey, element) {
     currentLanguage = langKey;
     if (element) {
@@ -80,18 +127,35 @@ window.switchLanguage = function(langKey, element) {
         element.classList.add('active');
     }
     
-    problemCount = 1;
+    // Pull existing score records for the newly chosen language layout from local profile logs
+    const savedScore = localStorage.getItem(`isla_terminal_progress_${langKey}`);
+    problemCount = savedScore ? parseInt(savedScore) : 1;
+
     playerInput = "";
     gameActive = true;
     terminalColor = "#33ff33";
-    systemMessage = `CONNECTING TRANSCEIVER INTERCEPT: ${langKey.toUpperCase()}`;
+    systemMessage = `TRANSCEIVER RE-ROUTING TO TARGET: ${langKey.toUpperCase()}`;
     
+    autoSaveProgress();
     loadLanguagePack(langKey);
+}
+
+// Difficulty Setting Configuration Switches Panel
+window.switchDifficultyMode = function(modeKey, element) {
+    difficultyMode = modeKey;
+    if (element) {
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+    }
+    systemMessage = `OS CONVERSION TYPE ALTERED TO: ${modeKey.toUpperCase()}`;
+    autoSaveProgress();
+    generateEquation();
+    drawTerminal();
 }
 
 function generateEquation() {
     const ops = ["+", "-", "*", "/"];
-    if (problemCount <= 12) {
+    if (problemCount <= 12 && difficultyMode === "standard") {
         currentOperator = ops[Math.floor(Math.random() * 2)];
     } else {
         currentOperator = ops[Math.floor(Math.random() * 4)];
@@ -124,25 +188,34 @@ function generateEquation() {
 }
 
 function triggerProceduralCorruption() {
-    for (let num in matrixState.numbers) matrixState.numbers[num] = false;
-    for (let op in matrixState.operators) matrixState.operators[op] = false;
+    // FIXED: Safely reset individual keys to false instead of wiping out the whole object variable structure
+    for (let i = 0; i <= 9; i++) {
+        matrixState.numbers[i] = false;
+    }
+    matrixState.operators["+"] = false;
+    matrixState.operators["-"] = false;
+    matrixState.operators["*"] = false;
+    matrixState.operators["/"] = false;
 
+    // HARDCORE FORCE ENTIRE CONVERSION MAPS ACTIVE INSTANTLY AT LEVEL ZERO
+    if (difficultyMode === "hardcore") {
+        for (let num in matrixState.numbers) matrixState.numbers[num] = true;
+        for (let op in matrixState.operators) matrixState.operators[op] = true;
+        return; 
+    }
+
+    // Standard Curve parameters progress mapping thresholds
     if (problemCount > 2)  matrixState.operators["+"] = true;
-    if (problemCount > 5)  matrixState.numbers[1] = true;
-    if (problemCount > 8)  matrixState.numbers[2] = true;
-    if (problemCount > 11) matrixState.operators["-"] = true;
-    if (problemCount > 15) matrixState.numbers[3] = true;
-    if (problemCount > 19) matrixState.numbers[4] = true;
-    if (problemCount > 24) matrixState.operators["*"] = true;
-    if (problemCount > 28) matrixState.numbers[5] = true;
-    if (problemCount > 32) matrixState.numbers[6] = true;
-    if (problemCount > 36) matrixState.operators["/"] = true;
-    if (problemCount > 40) matrixState.numbers[7] = true;
-    if (problemCount > 43) matrixState.numbers[8] = true;
-    if (problemCount > 46) matrixState.numbers[9] = true;
-    if (problemCount > 48) matrixState.numbers[0] = true;
+    if (problemCount > 5)  matrixState.numbers[0] = true; matrixState.numbers[1] = true;
+    if (problemCount > 10) matrixState.operators["-"] = true;
+    if (problemCount > 14) matrixState.numbers[2] = true; matrixState.numbers[3] = true;
+    if (problemCount > 20) matrixState.numbers[4] = true; matrixState.numbers[5] = true;
+    if (problemCount > 25) matrixState.operators["*"] = true;
+    if (problemCount > 30) matrixState.numbers[6] = true;
+    if (problemCount > 35) matrixState.operators["/"] = true;
+    if (problemCount > 40) matrixState.numbers[7] = true; matrixState.numbers[8] = true;
+    if (problemCount > 45) matrixState.numbers[9] = true;
 }
-
 function compileWord(type, item) {
     if (!currentDict) return "...";
     if (type === "number") {
@@ -170,17 +243,18 @@ function drawTerminal() {
     ctx.fillText("==================================================", 25, 30);
     ctx.fillText(`[${uiText.module} - ${uiText.status}]`, 25, 55);
     ctx.fillText(`SECTORS COMPLETED: ${problemCount - 1}/${TOTAL_PROBLEMS}`, 25, 85);
-    ctx.fillText(`CURVE CORRUPTION METRIC: ${problemCount * 2}%`, 25, 110);
+    ctx.fillText(`MODE: ${difficultyMode.toUpperCase()}`, 25, 110);
     ctx.fillText("==================================================", 25, 135);
-
+ // --- TRANSCEIVER REGISTRATION SHEET CHEAT SHEET AREA ---
     ctx.font = "bold 14px monospace";
-    ctx.fillText("TRANSCEIVER REGISTER STATUS:", 30, 165);
+    ctx.fillText(difficultyMode === "hardcore" ? "DECRYPTED OVERRIDE LOG:" : "TRANSCEIVER REGISTER STATUS:", 30, 165);
 
     let startX = 35;
     for (let i = 0; i <= 9; i++) {
         let rowIdx = i % 5; 
         let colIdx = Math.floor(i / 5); 
-        let isCorrupted = matrixState.numbers[i];
+        
+        let isCorrupted = matrixState.numbers[i]; 
         
         let posX = startX + (colIdx * 280); 
         let posY = 195 + (rowIdx * 28); 
@@ -191,10 +265,11 @@ function drawTerminal() {
 
         ctx.font = "13px monospace";
         ctx.fillStyle = isCorrupted ? "#ffaa00" : "#88ff88";
-        let subText = isCorrupted ? currentDict.numbers[i] : englishBase.numbers[i];
+        
+        // FIXED: subText is initialized here inside the loop scope before being called by fillText
+        let subText = isCorrupted ? currentDict.numbers[i] : (difficultyMode === "hardcore" ? "???" : englishBase.numbers[i]);
         ctx.fillText(subText, posX + 32, posY);
     }
-
     ctx.fillStyle = terminalColor;
     ctx.font = "bold 14px monospace";
     ctx.fillText("DATA INJECTORS:", 30, 355);
@@ -212,7 +287,7 @@ function drawTerminal() {
 
         ctx.font = "13px monospace";
         ctx.fillStyle = isCorrupted ? "#ffaa00" : "#88ff88";
-        let subOpText = isCorrupted ? currentDict.operators[op] : englishBase.operators[op];
+        let subOpText = isCorrupted ? currentDict.operators[op] : (difficultyMode === "hardcore" ? "???" : englishBase.operators[op]);
         ctx.fillText(subOpText, opX + 48, opY);
     }
 
@@ -243,7 +318,7 @@ function drawTerminal() {
         ctx.font = "22px monospace";
         ctx.fillText(`${uiText.complete} [OK]`, 35, 495);
         ctx.font = "15px monospace";
-        ctx.fillText(`Terminal OS fully configured to native operations.`, 35, 530);
+        ctx.fillText("Terminal OS fully configured to native operations.", 35, 530);
     }
 
     if (gameActive) {
@@ -258,20 +333,27 @@ function drawTerminal() {
             ctx.textBaseline = "middle";
             ctx.fillText(btn.label, btn.x + (btn.w / 2), btn.y + (btn.h / 2));
         });
-        ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+        ctx.textAlign = "left"; 
+        ctx.textBaseline = "alphabetic";
     }
 
     ctx.fillStyle = "rgba(0, 10, 0, 0.08)";
-    for (let k = 0; k < canvas.height; k += 4) ctx.fillRect(0, k, canvas.width, 2);
+    for (let k = 0; k < canvas.height; k += 4) {
+        ctx.fillRect(0, k, canvas.width, 2);
+    }
 }
 
 function checkSubmission() {
     if (!gameActive) return;
     if (parseInt(playerInput.trim()) === currentAnswer) {
         playFX("correct"); 
-        problemCount++; playerInput = "";
+        problemCount++; 
+        playerInput = "";
+        autoSaveProgress(); // Archive successful sectors count instantly into localStorage
+        
         if (problemCount > TOTAL_PROBLEMS) {
             gameActive = false;
+            autoSaveProgress();
         } else {
             systemMessage = "VALID PARSE SEGMENT INTERCEPTED.";
             generateEquation();
@@ -283,19 +365,14 @@ function checkSubmission() {
     }
     drawTerminal();
 }
-// FIXED AUDIO FX SYNTHESIZER ENGINE: Pure math oscillation using linear curves to bypass mobile & desktop mute policies
+
 function playFX(type) {
-    console.log(`[AUDIO ENGINE] playFX triggered for type: "${type}"`);
     try {
         if (!systemAudioContext) {
             systemAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log("[AUDIO ENGINE] Initialized new AudioContext instance.");
         }
-        
-        console.log(`[AUDIO ENGINE] Current Context State: "${systemAudioContext.state}"`);
         if (systemAudioContext.state === 'suspended') {
             systemAudioContext.resume();
-            console.log("[AUDIO ENGINE] Resumed a suspended AudioContext.");
         }
 
         const ctxAudio = systemAudioContext;
@@ -306,7 +383,6 @@ function playFX(type) {
         gainNode.connect(ctxAudio.destination);
 
         const timeNow = ctxAudio.currentTime;
-        console.log(`[AUDIO ENGINE] Core audio clock timestamp: ${timeNow}`);
 
         if (type === "click") {
             osc.type = "sine";
@@ -315,7 +391,6 @@ function playFX(type) {
             gainNode.gain.linearRampToValueAtTime(0.01, timeNow + 0.05); 
             osc.start(timeNow);
             osc.stop(timeNow + 0.05); 
-            console.log("[AUDIO ENGINE] Sine wave oscillation generated successfully.");
         } 
         else if (type === "correct") {
             osc.type = "triangle";
@@ -325,7 +400,6 @@ function playFX(type) {
             gainNode.gain.linearRampToValueAtTime(0.01, timeNow + 0.2);
             osc.start(timeNow);
             osc.stop(timeNow + 0.2);
-            console.log("[AUDIO ENGINE] Success up-chirp chords executed.");
         } 
         else if (type === "wrong") {
             osc.type = "sawtooth";
@@ -335,23 +409,17 @@ function playFX(type) {
             gainNode.gain.linearRampToValueAtTime(0.01, timeNow + 0.2);
             osc.start(timeNow);
             osc.stop(timeNow + 0.2);
-            console.log("[AUDIO ENGINE] Fault buzz tone executed.");
         }
-    } catch (e) {
-        console.error("[AUDIO ENGINE CRASH] Execution loop failed completely:", e);
+    } catch (e) { 
+        console.warn("Audio generation failed:", e); 
     }
 }
 
-// Touch Handling Logic Intercept Engine
 function handleScreenTouch(canvasX, canvasY) {
-    console.log(`[HITBOX ENGINE] Testing click target at Canvas coordinates: X=${Math.round(canvasX)}, Y=${Math.round(canvasY)}`);
-    let hitDetected = false;
-
+    if (!gameActive) return;
     keypads.forEach(btn => {
         if (canvasX >= btn.x && canvasX <= btn.x + btn.w && canvasY >= btn.y && canvasY <= btn.y + btn.h) {
-            console.log(`[HITBOX HIT] Bound match confirmed! Button label: "${btn.label}"`);
-            hitDetected = true;
-            playFX("click"); 
+            playFX("click");
             if (btn.label === "CLR") {
                 playerInput = "";
             } else if (btn.label === "ENT") {
@@ -362,18 +430,12 @@ function handleScreenTouch(canvasX, canvasY) {
             drawTerminal();
         }
     });
-
-    if (!hitDetected) {
-        console.log("[HITBOX MISS] Coordinates landed outside active keypad buttons boundaries.");
-    }
 }
 
-// Canvas Touch Intercept Listener Actions Map Hooks
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault(); 
-    console.log("[EVENT LISTENER] Native touchstart finger tap detected on Canvas view.");
     const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
+    const touch = e.touches[0]; // Restored explicit target array coordinate pointer index
     const scaleX = canvas.width / rect.width; 
     const scaleY = canvas.height / rect.height;
     
@@ -383,9 +445,7 @@ canvas.addEventListener('touchstart', (e) => {
     );
 }, { passive: false });
 
-// Desktop Mouse Click Compatibility Callback
 canvas.addEventListener('mousedown', (e) => {
-    console.log("[EVENT LISTENER] Native mousedown mouse click detected on Canvas view.");
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width; 
     const scaleY = canvas.height / rect.height;
