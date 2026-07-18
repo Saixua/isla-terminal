@@ -5,6 +5,9 @@ const ctx = canvas.getContext('2d');
 let currentLanguage = "es";
 let currentDict = null; 
 
+// Master Audio Context Tracker pinned globally
+let systemAudioContext = null;
+
 const englishBase = {
     numbers: { 0: "ZERO", 1: "ONE", 2: "TWO", 3: "THREE", 4: "FOUR", 5: "FIVE", 6: "SIX", 7: "SEVEN", 8: "EIGHT", 9: "NINE" },
     operators: { "+": "ADD", "-": "SUB", "*": "MULT", "/": "DIV" }
@@ -120,13 +123,10 @@ function generateEquation() {
     triggerProceduralCorruption();
 }
 
-// FIXED: Cleaned up loops and added safety brackets to prevent global state leaks
 function triggerProceduralCorruption() {
-    // Clear old memory matrix values completely before rebuilding
     for (let num in matrixState.numbers) matrixState.numbers[num] = false;
     for (let op in matrixState.operators) matrixState.operators[op] = false;
 
-    // Progressively unlock items based on exact score parameters
     if (problemCount > 2)  matrixState.operators["+"] = true;
     if (problemCount > 5)  matrixState.numbers[1] = true;
     if (problemCount > 8)  matrixState.numbers[2] = true;
@@ -176,7 +176,6 @@ function drawTerminal() {
     ctx.font = "bold 14px monospace";
     ctx.fillText("TRANSCEIVER REGISTER STATUS:", 30, 165);
 
-    // FIXED: Rebuilt layout into a spacious 2-column list layout giving 280px width per item to prevent collisions
     let startX = 35;
     for (let i = 0; i <= 9; i++) {
         let rowIdx = i % 5; 
@@ -247,7 +246,6 @@ function drawTerminal() {
         ctx.fillText(`Terminal OS fully configured to native operations.`, 35, 530);
     }
 
-    // Virtual Touch Pad Layout Buttons container starts safely below the layout space metrics at 570
     if (gameActive) {
         keypads.forEach(btn => {
             ctx.strokeStyle = terminalColor;
@@ -270,26 +268,90 @@ function drawTerminal() {
 function checkSubmission() {
     if (!gameActive) return;
     if (parseInt(playerInput.trim()) === currentAnswer) {
+        playFX("correct"); 
         problemCount++; playerInput = "";
         if (problemCount > TOTAL_PROBLEMS) {
-			gameActive = false;
+            gameActive = false;
         } else {
             systemMessage = "VALID PARSE SEGMENT INTERCEPTED.";
             generateEquation();
         }
     } else {
+        playFX("wrong"); 
         systemMessage = "CRITICAL METRIC BALANCE FAULT.";
         playerInput = "";
     }
     drawTerminal();
 }
+// FIXED AUDIO FX SYNTHESIZER ENGINE: Pure math oscillation using linear curves to bypass mobile & desktop mute policies
+function playFX(type) {
+    console.log(`[AUDIO ENGINE] playFX triggered for type: "${type}"`);
+    try {
+        if (!systemAudioContext) {
+            systemAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log("[AUDIO ENGINE] Initialized new AudioContext instance.");
+        }
+        
+        console.log(`[AUDIO ENGINE] Current Context State: "${systemAudioContext.state}"`);
+        if (systemAudioContext.state === 'suspended') {
+            systemAudioContext.resume();
+            console.log("[AUDIO ENGINE] Resumed a suspended AudioContext.");
+        }
+
+        const ctxAudio = systemAudioContext;
+        const osc = ctxAudio.createOscillator();
+        const gainNode = ctxAudio.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(ctxAudio.destination);
+
+        const timeNow = ctxAudio.currentTime;
+        console.log(`[AUDIO ENGINE] Core audio clock timestamp: ${timeNow}`);
+
+        if (type === "click") {
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(800, timeNow); 
+            gainNode.gain.setValueAtTime(0.1, timeNow); 
+            gainNode.gain.linearRampToValueAtTime(0.01, timeNow + 0.05); 
+            osc.start(timeNow);
+            osc.stop(timeNow + 0.05); 
+            console.log("[AUDIO ENGINE] Sine wave oscillation generated successfully.");
+        } 
+        else if (type === "correct") {
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(523.25, timeNow); 
+            osc.frequency.setValueAtTime(659.25, timeNow + 0.08); 
+            gainNode.gain.setValueAtTime(0.1, timeNow);
+            gainNode.gain.linearRampToValueAtTime(0.01, timeNow + 0.2);
+            osc.start(timeNow);
+            osc.stop(timeNow + 0.2);
+            console.log("[AUDIO ENGINE] Success up-chirp chords executed.");
+        } 
+        else if (type === "wrong") {
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(150, timeNow); 
+            osc.frequency.linearRampToValueAtTime(100, timeNow + 0.2); 
+            gainNode.gain.setValueAtTime(0.15, timeNow);
+            gainNode.gain.linearRampToValueAtTime(0.01, timeNow + 0.2);
+            osc.start(timeNow);
+            osc.stop(timeNow + 0.2);
+            console.log("[AUDIO ENGINE] Fault buzz tone executed.");
+        }
+    } catch (e) {
+        console.error("[AUDIO ENGINE CRASH] Execution loop failed completely:", e);
+    }
+}
 
 // Touch Handling Logic Intercept Engine
 function handleScreenTouch(canvasX, canvasY) {
-    if (!gameActive) return;
+    console.log(`[HITBOX ENGINE] Testing click target at Canvas coordinates: X=${Math.round(canvasX)}, Y=${Math.round(canvasY)}`);
+    let hitDetected = false;
 
     keypads.forEach(btn => {
         if (canvasX >= btn.x && canvasX <= btn.x + btn.w && canvasY >= btn.y && canvasY <= btn.y + btn.h) {
+            console.log(`[HITBOX HIT] Bound match confirmed! Button label: "${btn.label}"`);
+            hitDetected = true;
+            playFX("click"); 
             if (btn.label === "CLR") {
                 playerInput = "";
             } else if (btn.label === "ENT") {
@@ -300,15 +362,18 @@ function handleScreenTouch(canvasX, canvasY) {
             drawTerminal();
         }
     });
+
+    if (!hitDetected) {
+        console.log("[HITBOX MISS] Coordinates landed outside active keypad buttons boundaries.");
+    }
 }
 
 // Canvas Touch Intercept Listener Actions Map Hooks
 canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault(); // Prevents zoom-double-tap delays on phone browsers
+    e.preventDefault(); 
+    console.log("[EVENT LISTENER] Native touchstart finger tap detected on Canvas view.");
     const rect = canvas.getBoundingClientRect();
-    
-    // Scale tracking down directly to coordinate grids
-    const touch = e.touches[0]; // Restored explicit target index
+    const touch = e.touches[0];
     const scaleX = canvas.width / rect.width; 
     const scaleY = canvas.height / rect.height;
     
@@ -320,6 +385,7 @@ canvas.addEventListener('touchstart', (e) => {
 
 // Desktop Mouse Click Compatibility Callback
 canvas.addEventListener('mousedown', (e) => {
+    console.log("[EVENT LISTENER] Native mousedown mouse click detected on Canvas view.");
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width; 
     const scaleY = canvas.height / rect.height;
@@ -329,7 +395,3 @@ canvas.addEventListener('mousedown', (e) => {
         (e.clientY - rect.top) * scaleY
     );
 });
-
-// Initialization Sequencing Runtime Launches
-setupMobileKeypad();
-loadLanguagePack(currentLanguage);
