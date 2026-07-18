@@ -1,0 +1,18 @@
+{
+  "ui": {
+    "module": "HAUPTMODUL",
+    "status": "SYSTEM FEHLER",
+    "log": "ABFANGEN AKTIV",
+    "complete": "DEVERSCHLÜSSELUNG OK"
+  },
+  "operators": {
+    "+": "PLUS",
+    "-": "MINUS",
+    "*": "MAL",
+    "/": "DURCH"
+  },
+  "numbers": {
+    "0": "NULL", "1": "EINS", "2": "ZWEI", "3": "DREI", "4": "VIER",
+    "5": "FÜNF", "6": "SECHS", "7": "SIEBEN", "8": "ACHT", "9": "NEUN"
+  }
+}

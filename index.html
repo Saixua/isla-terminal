@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Isla Terminal - Decoder</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #050505;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            overflow: hidden; touch-action: none;
+            font-family: monospace;
+        }
+        .lang-selector { margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .lang-btn {
+            background-color: #000a00; color: #33ff33; border: 2px solid #005500;
+            padding: 8px 16px; cursor: pointer; font-family: monospace; font-weight: bold;
+            box-shadow: 0 0 10px #002200; transition: all 0.2s ease;
+        }
+        .lang-btn:hover, .lang-btn.active {
+            background-color: #003300; color: #ffffff; border-color: #33ff33; box-shadow: 0 0 15px #005500;
+        }
+        canvas {
+            border: 2px solid #005500; box-shadow: 0 0 20px #003300;
+            background-color: #000a00; max-width: 100vw; max-height: 80vh; object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ADDED RUSSIAN (RU) BUTTON DETECT LINK ENTRY -->
+    <div class="lang-selector">
+        <button id="btn-es" class="lang-btn active" onclick="switchLanguage('es', this)">SPANISH (ES)</button>
+        <button id="btn-de" class="lang-btn" onclick="switchLanguage('de', this)">GERMAN (DE)</button>
+        <button id="btn-fr" class="lang-btn" onclick="switchLanguage('fr', this)">FRENCH (FR)</button>
+        <button id="btn-ru" class="lang-btn" onclick="switchLanguage('ru', this)">RUSSIAN (RU)</button>
+    </div>
+
+    <canvas id="terminal" width="600" height="900"></canvas>
+
+    <script src="game.js?v=json_loader_build_v2"></script>
+
+</body>
+</html>

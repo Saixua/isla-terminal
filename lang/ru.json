@@ -1,0 +1,26 @@
+{
+  "ui": {
+    "module": "ГЛАВНЫЙ МОДУЛЬ (GLAV-NIY MO-DUL)",
+    "status": "ОС ПОВРЕЖДЕНА (OS POV-REZH-DE-NA)",
+    "log": "ПЕРЕХВАТ АКТИВЕН (PE-RE-HVAT AK-TI-VEN)",
+    "complete": "РАСШИФРОВКА ЗАВЕРШЕНА (RAS-SHIF-ROV-KA ZA-VER-SHE-NA)"
+  },
+  "operators": {
+    "+": "ПЛЮС (PLYUS)",
+    "-": "МИНУС (MI-NUS)",
+    "*": "УМНОЖИТЬ (UM-NO-ZHIT')",
+    "/": "РАЗДЕЛИТЬ (RAZ-DE-LIT')"
+  },
+  "numbers": {
+    "0": "НОЛЬ (NOL')",
+    "1": "ОДИН (O-DIN)",
+    "2": "ДВА (DVA)",
+    "3": "ТРИ (TRI)",
+    "4": "ЧЕТЫРЕ (CHE-TI-RE)",
+    "5": "ПЯТЬ (PYAT')",
+    "6": "ШЕСТЬ (SHEST')",
+    "7": "СЕМЬ (SEM')",
+    "8": "ВОСЕМЬ (VO-SEM')",
+    "9": "ДЕВЯТЬ (DE-VYAT')"
+  }
+}
